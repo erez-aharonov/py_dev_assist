@@ -18,7 +18,7 @@ class CallGraphCollector(cst.CSTVisitor):
         self._used_methods_list: List[str] = []
 
     def visit_Attribute(self, node: cst.Attribute):
-        if node.value.value == 'self':
+        if hasattr(node, 'value') and hasattr(node.value, 'value') and node.value.value == 'self':
             self._used_methods_list.append(node.attr.value)
 
     def get_used_methods_list(self):
@@ -58,6 +58,7 @@ class TypingTransformer(cst.CSTTransformer):
         df['is_magic'] = df['func_name'].str.startswith('__') & df['func_name'].str.endswith('__')
         df['is_public'] = ~df['func_name'].apply(lambda x: re.search('^_[a-zA-Z]', x) is not None)
         df_2 = df.sort_values(['is_magic', 'is_public', 'inverse_distance'], ascending=False)
+        print(df_2[['func_name', 'used_functions', 'is_magic', 'is_public', 'distance']])
         sorted_functions_nodes_list = df_2['node'].tolist()
         return sorted_functions_nodes_list
 
@@ -80,7 +81,6 @@ class TypingTransformer(cst.CSTTransformer):
 
         directed_graph.add_node(root)
         for index, row in func_df.iterrows():
-            print(row['func_name'])
             directed_graph.add_node(row['func_name'])
         for index, row in func_df.iterrows():
             directed_graph.add_edge(root, row['func_name'])
